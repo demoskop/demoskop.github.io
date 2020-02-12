@@ -1,0 +1,19 @@
+.page-header-extend {
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center;
+}
+.flex-align-center {
+    display: flex; 
+    align-items: center;
+}
+
+.page-header-title {
+    font-size: 40px; 
+    font-weight: bold;
+}
+
+.page-header-logo {
+    height: 100px; 
+    margin-left:10px
+}
