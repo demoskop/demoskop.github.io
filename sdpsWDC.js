@@ -8,16 +8,6 @@ var isTokenExpired = function (aToken) {
     }
 }
 
-var selectProject = function (projectId) {
-    var tokens = tableau.connectionData ? JSON.parse(tableau.connectionData)['tokens'] : '';
-    tableau.connectionName = projectId;
-    tableau.connectionData = JSON.stringify({
-        'tokens': tokens,
-        'projectId': projectId
-    });
-    tableau.submit();
-}
-
 var populateProjectList = function (data) {
     //? First clear the list first of old cached content
 
@@ -33,7 +23,8 @@ var populateProjectList = function (data) {
         btn.type = "button";
         btn.className = "list-group-item";
         btn.addEventListener("click", function () {
-            selectProject(item);
+            tableau.connectionName = item;
+            tableau.submit();
         }, false);
         var h4 = document.createElement("h4");
         h4.innerHTML = item;
@@ -60,7 +51,7 @@ var getAuthBody = function () {
 
 var getReAuthBody = function () {
     return JSON.stringify({
-        rToken: JSON.parse(tableau.connectionData)['tokens'].rToken,
+        rToken: JSON.parse(tableau.password).rToken,
         loginMethod: "token"
     });
 }
@@ -75,12 +66,7 @@ var auth = function (authBody) {
         dataType: "json",
         success: function (tokens) {
             if (tokens) {
-                var projectId = tableau.connectionData ? JSON.parse(tableau.connectionData)['projectId'] : '';
-                tableau.connectionData = JSON.stringify({
-                    'tokens': tokens,
-                    'projectId': projectId
-                });
-
+                tableau.password = JSON.stringify(tokens)
                 $("#loginContainer").css('display', 'none');
                 $("#surveyContainer").css('display', 'block');
                 $("#btnLogout").css('display', 'block');
@@ -97,12 +83,7 @@ var auth = function (authBody) {
 };
 
 var getCategories = function () {
-    var tokens = tableau.connectionData ? JSON.parse(tableau.connectionData)['tokens'] : '';
-    var projectId = tableau.connectionData ? JSON.parse(tableau.connectionData)['projectId'] : '';
-    tableau.connectionData = JSON.stringify({
-        'tokens': tokens,
-        'projectId': projectId
-    });
+    var tokens = JSON.parse(tableau.password);
 
     $.ajax({
         type: "GET",
@@ -123,6 +104,12 @@ var getCategories = function () {
 
 (function () {
     var myConnector = tableau.makeConnector();
+
+    myConnector.init = function (initCallback) {
+        tableau.authType = tableau.authTypeEnum.custom;
+        tableau.log("in " + tableau.phase + " phase");
+        initCallback();
+    }
 
     myConnector.getSchema = function (schemaCallback) {
         var cols = [{
@@ -169,7 +156,7 @@ var getCategories = function () {
         }];
 
         var tableSchema = {
-            id: "Project_" + JSON.parse(tableau.connectionData)['projectId'],
+            id: "Project_" + tableau.connectionName,
             alias: tableau.connectionName,
             columns: cols
         };
@@ -177,9 +164,10 @@ var getCategories = function () {
         schemaCallback([tableSchema]);
     };
     myConnector.getData = function (table, doneCallback) {
-        var projectId = JSON.parse(tableau.connectionData)['projectId'];
+        var projectId = tableau.connectionName;
         var projectUrlQuery = projectId ? "&projectId=" + projectId : "";
-        var aToken = JSON.parse(tableau.connectionData)['tokens'].aToken;
+        var aToken = JSON.parse(tableau.password).aToken;
+        tableau.log(aToken)
 
         if (aToken) {
             if (isTokenExpired(aToken)) {
@@ -189,11 +177,12 @@ var getCategories = function () {
             tableau.abortWithError("No token available");
         }
 
+        tableau.log(JSON.parse(tableau.password).aToken)
         $.ajax({
             url: "https://sdps-api.azurewebsites.net/api/v1/survey?limit=-1" + projectUrlQuery,
             type: "GET",
             headers: {
-                'Authorization': 'Bearer ' + JSON.parse(tableau.connectionData)['tokens'].aToken
+                'Authorization': 'Bearer ' + JSON.parse(tableau.password).aToken
             },
             success: function (response) {
                 var items = response.items, tableData = [];
