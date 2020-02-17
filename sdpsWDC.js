@@ -1,95 +1,56 @@
-var isTokenExpired = function (aToken) {
-    try {
-        var expirationTime = JSON.parse(atob(aToken.split('.')[1])).exp;
-        var currentTime = Date.now().valueOf() / 1000;
-        return expirationTime < currentTime;
-    } catch (e) {
-        return true;
-    }
-}
-
-var populateProjectList = function (data) {
-    //? First clear the list first of old cached content
-
-    $("#lgProjects").empty();
-
-    //? then loop through the project id data
-
-    $.each(data, function (i, item) {
-
-        //? create a button and attach its content.
-
-        var btn = document.createElement("button");
-        btn.type = "button";
-        btn.className = "list-group-item";
-        btn.addEventListener("click", function () {
-            tableau.connectionName = item;
-            tableau.submit();
-        }, false);
-        var h4 = document.createElement("h4");
-        h4.innerHTML = item;
-        h4.className = "list-group-item-heading";
-        btn.appendChild(h4);
-        var paragraph = document.createElement("p");
-        paragraph.innerHTML = "Created: 2020-02-03 | Published: 2020-05-03";
-        paragraph.className = "list-group-item-text";
-        btn.appendChild(paragraph);
-
-        //? last append the button(s) to the list
-
-        $("#lgProjects").append(btn);
-    });
-}
+var isValidLogin = function () {
+    return ($("#email").val().length > 0 && $("#password").val().length > 0);
+};
 
 var getAuthBody = function () {
     return JSON.stringify({
-        email: $('#email').val().trim(),
-        password: $('#password').val().trim(),
+        email: tableau.username,
+        password: tableau.password,
         loginMethod: "password"
-    });
-}
-
-var getReAuthBody = function () {
-    return JSON.stringify({
-        rToken: JSON.parse(tableau.password).rToken,
-        loginMethod: "token"
-    });
-}
-
-var auth = function (authBody) {
-    return $.ajax({
-        type: "POST",
-        url: "https://sdps-api.azurewebsites.net/api/v1/auth",
-        data: authBody,
-        async: false,
-        contentType: "application/json; charset=utf-8",
-        dataType: "json",
-        success: function (tokens) {
-            if (tokens) {
-                tableau.password = JSON.stringify(tokens)
-                $("#loginContainer").css('display', 'none');
-                $("#surveyContainer").css('display', 'block');
-                $("#btnLogout").css('display', 'block');
-            } else {
-                $("#loginStatus").text("Could not log in, no tokens");
-            }
-        },
-        error: function (error) {
-            $("#btnLogin").attr("disabled", false);
-            var errorText = error.responseText ? error.responseText : "Unexpected error";
-            $("#loginStatus").text(errorText);
-        }
     });
 };
 
-var getCategories = function () {
-    var tokens = JSON.parse(tableau.password);
+var createProjectListButton = function (projectId) {
+    //? create a button and attach some content.
+    var btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "list-group-item";
+    btn.addEventListener("click", function () {
+        tableau.connectionName = projectId;
+        tableau.submit();
+    }, false);
 
+    var h4 = document.createElement("h4");
+    h4.innerHTML = projectId;
+    h4.className = "list-group-item-heading";
+    btn.appendChild(h4);
+
+    var paragraph = document.createElement("p");
+    paragraph.innerHTML = "Created: 2020-02-03 | Published: 2020-05-03";
+    paragraph.className = "list-group-item-text";
+    btn.appendChild(paragraph);
+
+    return btn;
+};
+
+var populateProjectList = function (data) {
+    //? First clear the list first of old cached content
+    $("#lgProjects").empty();
+
+    //? then loop through the project id data
+    $.each(data, function (i, item) {
+
+        //? last append the button(s) to the list
+        var btn = createProjectListButton(item);
+        $("#lgProjects").append(btn);
+    });
+};
+
+var getCategories = function (aToken) {
     $.ajax({
         type: "GET",
         url: "https://sdps-api.azurewebsites.net/api/v1/survey/available-projects",
-        async: false,
-        headers: { "Authorization": 'Bearer ' + tokens.aToken },
+        headers: { "Authorization": 'Bearer ' + aToken },
         contentType: "application/json; charset=utf-8",
         dataType: "json",
         success: function (data) {
@@ -163,50 +124,61 @@ var getCategories = function () {
 
         schemaCallback([tableSchema]);
     };
+
     myConnector.getData = function (table, doneCallback) {
         var projectId = tableau.connectionName;
         var projectUrlQuery = projectId ? "&projectId=" + projectId : "";
-        var aToken = JSON.parse(tableau.password).aToken;
-        tableau.log(aToken)
+        var aToken = '';
 
-        if (aToken) {
-            if (isTokenExpired(aToken)) {
-                auth(getReAuthBody());
+        var authCall = $.ajax({
+            type: "POST",
+            url: "https://sdps-api.azurewebsites.net/api/v1/auth",
+            data: getAuthBody(),
+            contentType: "application/json; charset=utf-8",
+            dataType: "json",
+            success: function (tokens) {
+                aToken = tokens.aToken;
+            },
+            error: function (error) {
+                var errorText = error.responseText ? error.responseText : "Unexpected error";
+                tableau.log(errorText);
             }
-        } else {
-            tableau.abortWithError("No token available");
-        }
+        });
 
-        tableau.log(JSON.parse(tableau.password).aToken)
-        $.ajax({
-            url: "https://sdps-api.azurewebsites.net/api/v1/survey?limit=-1" + projectUrlQuery,
-            type: "GET",
-            headers: {
-                'Authorization': 'Bearer ' + JSON.parse(tableau.password).aToken
-            },
-            success: function (response) {
-                var items = response.items, tableData = [];
-                var options = { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' };
-                for (var i = 0; i < items.length; i++) {
-                    tableData.push({
-                        "Id": items[i].id,
-                        "CreatedOn": new Date(items[i].createdOn).toLocaleString(undefined, options),
-                        "PublishedOn": new Date(items[i].publishedOn).toLocaleString(),
-                        "Question": items[i].question,
-                        "SubQuestion": items[i].subQuestion,
-                        "DataIndex": items[i].dataIndex,
-                        "DataValue": items[i].dataValue,
-                        "Brand": items[i].brand,
-                        "MeasurementType": items[i].measurementType,
-                        "Country": items[i].country,
-                        "ProjectId": items[i].projectId,
-                    });
-                }
-                table.appendRows(tableData);
-                doneCallback();
-            },
-            error: function (xhr, ajaxOptions, thrownError) {
-                tableau.abortWithError("Unable to get data");
+        authCall.then(function () {
+            var isSuccess = authCall.status === 200;
+            var hasToken = (aToken && aToken.length > 0);
+
+            if (isSuccess && hasToken) {
+                $.ajax({
+                    url: "https://sdps-api.azurewebsites.net/api/v1/survey?limit=-1" + projectUrlQuery,
+                    type: "GET",
+                    headers: { 'Authorization': 'Bearer ' + aToken },
+                    success: function (response) {
+                        var items = response.items, tableData = [];
+                        var options = { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' };
+                        for (var i = 0; i < items.length; i++) {
+                            tableData.push({
+                                "Id": items[i].id,
+                                "CreatedOn": new Date(items[i].createdOn).toLocaleString(undefined, options),
+                                "PublishedOn": new Date(items[i].publishedOn).toLocaleString(),
+                                "Question": items[i].question,
+                                "SubQuestion": items[i].subQuestion,
+                                "DataIndex": items[i].dataIndex,
+                                "DataValue": items[i].dataValue,
+                                "Brand": items[i].brand,
+                                "MeasurementType": items[i].measurementType,
+                                "Country": items[i].country,
+                                "ProjectId": items[i].projectId,
+                            });
+                        }
+                        table.appendRows(tableData);
+                        doneCallback();
+                    },
+                    error: function (xhr, ajaxOptions, thrownError) {
+                        tableau.abortWithError("Unable to get data");
+                    }
+                });
             }
         });
     };
@@ -214,15 +186,46 @@ var getCategories = function () {
 
     $(document).ready(function () {
         $("#btnLogin").click(function () {
-            if ($("#email").val().length <= 0 || $("#password").val().length <= 0) {
+            var aToken = '';
+
+            //? validate form
+            if (!isValidLogin()) {
                 $("#loginStatus").text("Enter login credentials");
                 return;
             }
 
+            //? set credentials
             $("#btnLogin").attr("disabled", true);
-            var authCall = auth(getAuthBody());
+            tableau.username = $('#email').val().trim();
+            tableau.password = $('#password').val().trim();
+
+            //? attempt login
+            var authCall = $.ajax({
+                type: "POST",
+                url: "https://sdps-api.azurewebsites.net/api/v1/auth",
+                data: getAuthBody(),
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                success: function (tokens) {
+                    aToken = tokens.aToken;
+                    $("#loginContainer").css('display', 'none');
+                    $("#surveyContainer").css('display', 'block');
+                    $("#btnLogout").css('display', 'block');
+                },
+                error: function (error) {
+                    var errorText = error.responseText ? error.responseText : "Unexpected error";
+                    $("#btnLogin").attr("disabled", false);
+                    $("#loginStatus").text(errorText);
+                }
+            });
+
             authCall.then(function () {
-                getCategories();
+                var isSuccess = authCall.status === 200;
+                var hasToken = (aToken && aToken.length > 0);
+
+                if (isSuccess && hasToken) {
+                    getCategories(aToken);
+                }
             });
         });
 
@@ -232,7 +235,9 @@ var getCategories = function () {
             $("#loginContainer").css('display', 'block');
             $("#surveyContainer").css('display', 'none');
             $("#btnLogout").css('display', 'block');
-            localStorage.removeItem("tokens");
+            tableau.username = '';
+            tableau.password = '';
+            tableau.connectionName = '';
         });
     });
 })();
