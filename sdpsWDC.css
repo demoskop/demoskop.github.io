@@ -17,3 +17,20 @@
     height: 100px; 
     margin-left:10px
 }
+
+.lg-group {
+    display: flex;
+}
+
+.lg-checkBox {
+    align-self: center;
+    padding: 0px 20px 0px 10px;
+}
+
+.bold-text {
+    font-weight: bold;
+}
+
+.mb-10 {
+    margin-bottom: 10px;
+}

@@ -11,26 +11,53 @@ var getAuthBody = function () {
 };
 
 var createProjectListButton = function (projectId) {
-    //? create a button and attach some content.
-    var btn = document.createElement("button");
-    btn.type = "button";
-    btn.className = "list-group-item";
-    btn.addEventListener("click", function () {
-        tableau.connectionName = projectId;
-        tableau.submit();
-    }, false);
+    //? container
+
+    var li = document.createElement("li");
+    li.className = "list-group-item";
+
+    var outerDiv = document.createElement("div");
+    outerDiv.className = "lg-group";
+    li.appendChild(outerDiv);
+
+    //? checkbox
+
+    var checkboxSpan = document.createElement("span");
+    checkboxSpan.className = "lg-checkBox";
+    outerDiv.appendChild(checkboxSpan);
+
+    var checkbox = document.createElement("input");
+    checkbox.type = "checkbox";
+    checkbox.className = "lg-checkItem";
+    checkbox.addEventListener("change", function () {
+        var splitIds = $("#projectIds").text() === "" ? [] : $("#projectIds").text().split(",");
+
+        if (this.checked) {
+            splitIds.push(projectId);
+            var joinedIds = splitIds.join(',');
+            $("#projectIds").text(joinedIds);
+        } else {
+            splitIds = splitIds.filter(function (e) { return e !== projectId });
+            var joinedIds = splitIds.join(',');
+            $("#projectIds").text(joinedIds);
+        }
+        tableau.log($("#projectIds").text());
+
+        $("#btnFetch").prop('disabled', $("#projectIds").text() === '');
+    });
+    checkboxSpan.appendChild(checkbox);
+
+    //? info
+
+    var infoDiv = document.createElement("div");
+    outerDiv.appendChild(infoDiv);
 
     var h4 = document.createElement("h4");
     h4.innerHTML = projectId;
     h4.className = "list-group-item-heading";
-    btn.appendChild(h4);
+    infoDiv.appendChild(h4);
 
-    var paragraph = document.createElement("p");
-    paragraph.innerHTML = "Created: 2020-02-03 | Published: 2020-05-03";
-    paragraph.className = "list-group-item-text";
-    btn.appendChild(paragraph);
-
-    return btn;
+    return li;
 };
 
 var populateProjectList = function (data) {
@@ -40,9 +67,9 @@ var populateProjectList = function (data) {
     //? then loop through the project id data
     $.each(data, function (i, item) {
 
-        //? last append the button(s) to the list
-        var btn = createProjectListButton(item);
-        $("#lgProjects").append(btn);
+        //? last append the item(s) to the list
+        var li = createProjectListButton(item);
+        $("#lgProjects").append(li);
     });
 };
 
@@ -126,8 +153,8 @@ var getCategories = function (aToken) {
     };
 
     myConnector.getData = function (table, doneCallback) {
-        var projectId = tableau.connectionName;
-        var projectUrlQuery = projectId ? "&projectId=" + projectId : "";
+        var projectIds = tableau.connectionData;
+        var projectUrlQuery = projectIds ? "&projectId=" + projectIds : "";
         var aToken = '';
 
         var authCall = $.ajax({
@@ -185,6 +212,13 @@ var getCategories = function (aToken) {
     tableau.registerConnector(myConnector);
 
     $(document).ready(function () {
+        $("#btnFetch").click(function () {
+            var projectIds = $("#projectIds").text();
+            tableau.connectionName = projectIds.replace(',', '_');
+            tableau.connectionData = projectIds;
+            tableau.submit();
+        });
+
         $("#btnLogin").click(function () {
             var aToken = '';
 
@@ -230,6 +264,7 @@ var getCategories = function (aToken) {
         });
 
         $("#btnLogout").click(function () {
+            $("#projectIds").text("");
             $("#loginStatus").text("");
             $("#btnLogin").attr("disabled", false);
             $("#loginContainer").css('display', 'block');

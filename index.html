@@ -50,11 +50,20 @@
                     <p id="loginStatus" />
                 </div>
             </div>
-            <p id="testStatus" />
 
             <div id="surveyContainer" style="display: none;">
-                <div id="lgProjects" class="list-group" />
+                <p>Select the projects you'd like to get data from. Then click the "Fetch selected project data" button
+                    below to load the data into Tableau</p>
+
+                <div class="mb-10">
+                    <button type="button" id="btnFetch" disabled=true class="btn btn-primary btn-block">Fetch selected
+                        project
+                        data</button>
+                </div>
+
+                <ul id="lgProjects" class="list-group" />
             </div>
+            <span id="projectIds" style="display:none;"></span>
         </div>
     </div>
 </body>
