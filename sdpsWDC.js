@@ -116,30 +116,45 @@ var getCategories = function (aToken) {
             id: "Question",
             dataType: tableau.dataTypeEnum.string
         }, {
-            id: "SubQuestion",
-            alias: "Sub question",
+            id: "Answer",
             dataType: tableau.dataTypeEnum.string
         }, {
-            id: "DataIndex",
-            alias: "Data index",
+            id: "Attribute",
             dataType: tableau.dataTypeEnum.string
         }, {
-            id: "DataValue",
-            alias: "Data value",
+            id: "Base",
+            dataType: tableau.dataTypeEnum.string
+        }, {
+            id: "Dimension",
+            dataType: tableau.dataTypeEnum.string
+        }, {
+            id: "Facet",
+            dataType: tableau.dataTypeEnum.string
+        }, {
+            id: "Group",
+            dataType: tableau.dataTypeEnum.string
+        }, {
+            id: "SubGroup",
+            alias: "Sub group",
+            dataType: tableau.dataTypeEnum.string
+        }, {
+            id: "UploadId",
+            alias: "Upload id",
+            dataType: tableau.dataTypeEnum.string
+        }, {
+            id: "Value",
             dataType: tableau.dataTypeEnum.float
         }, {
-            id: "Brand",
-            dataType: tableau.dataTypeEnum.string
-        }, {
-            id: "MeasurementType",
-            alias: "Measurement type",
-            dataType: tableau.dataTypeEnum.string
-        }, {
-            id: "Country",
+            id: "ValueType",
+            alias: "Value type",
             dataType: tableau.dataTypeEnum.string
         }, {
             id: "ProjectId",
             alias: "Project id",
+            dataType: tableau.dataTypeEnum.string
+        }, {
+            id: "SubProjectId",
+            alias: "Sub project id",
             dataType: tableau.dataTypeEnum.string
         }];
 
@@ -190,13 +205,18 @@ var getCategories = function (aToken) {
                                 "CreatedOn": new Date(items[i].createdOn).toLocaleString(undefined, options),
                                 "PublishedOn": new Date(items[i].publishedOn).toLocaleString(),
                                 "Question": items[i].question,
-                                "SubQuestion": items[i].subQuestion,
-                                "DataIndex": items[i].dataIndex,
-                                "DataValue": items[i].dataValue,
-                                "Brand": items[i].brand,
-                                "MeasurementType": items[i].measurementType,
-                                "Country": items[i].country,
+                                "Answer": items[i].answer,
+                                "Attribute": items[i].attribute,
+                                "Base": items[i].base,
+                                "Dimension": items[i].dimension,
+                                "Facet": items[i].facet,
+                                "Group": items[i].group,
+                                "SubGroup": items[i].subGroup,
+                                "UploadId": items[i].uploadId,
+                                "Value": items[i].value,
+                                "ValueType": items[i].valueType,
                                 "ProjectId": items[i].projectId,
+                                "SubProjectId": items[i].subProjectId,
                             });
                         }
                         table.appendRows(tableData);
