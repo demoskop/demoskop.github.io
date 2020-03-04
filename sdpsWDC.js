@@ -169,7 +169,7 @@ var getCategories = function (aToken) {
 
     myConnector.getData = function (table, doneCallback) {
         var projectIds = tableau.connectionData;
-        var projectUrlQuery = projectIds ? "&projectId=" + projectIds : "";
+        var projectUrlQuery = projectIds ? "&projectIds=" + projectIds : "";
         var aToken = '';
 
         var authCall = $.ajax({
@@ -198,7 +198,7 @@ var getCategories = function (aToken) {
                     headers: { 'Authorization': 'Bearer ' + aToken },
                     success: function (response) {
                         var items = response.items, tableData = [];
-                        var options = { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' };
+                        var options = { year: 'numeric', month: '2-digit', day: '2-digit' };
                         for (var i = 0; i < items.length; i++) {
                             tableData.push({
                                 "Id": items[i].id,
