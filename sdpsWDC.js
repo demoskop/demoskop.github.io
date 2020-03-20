@@ -76,7 +76,7 @@ var populateProjectList = function (data) {
 var getCategories = function (aToken) {
     $.ajax({
         type: "GET",
-        url: "https://sdps-api.azurewebsites.net/api/v1/survey/available-projects",
+        url: "https://wings.demoskop.se/api/v1/survey/available-projects",
         headers: { "Authorization": 'Bearer ' + aToken },
         contentType: "application/json; charset=utf-8",
         dataType: "json",
@@ -174,7 +174,7 @@ var getCategories = function (aToken) {
 
         var authCall = $.ajax({
             type: "POST",
-            url: "https://sdps-api.azurewebsites.net/api/v1/auth",
+            url: "https://wings.demoskop.se/api/v1/auth",
             data: getAuthBody(),
             contentType: "application/json; charset=utf-8",
             dataType: "json",
@@ -193,7 +193,7 @@ var getCategories = function (aToken) {
 
             if (isSuccess && hasToken) {
                 $.ajax({
-                    url: "https://sdps-api.azurewebsites.net/api/v1/survey?limit=-1" + projectUrlQuery,
+                    url: "https://wings.demoskop.se/api/v1/survey?limit=-1" + projectUrlQuery,
                     type: "GET",
                     headers: { 'Authorization': 'Bearer ' + aToken },
                     success: function (response) {
@@ -256,7 +256,7 @@ var getCategories = function (aToken) {
             //? attempt login
             var authCall = $.ajax({
                 type: "POST",
-                url: "https://sdps-api.azurewebsites.net/api/v1/auth",
+                url: "https://wings.demoskop.se/api/v1/auth",
                 data: getAuthBody(),
                 contentType: "application/json; charset=utf-8",
                 dataType: "json",
